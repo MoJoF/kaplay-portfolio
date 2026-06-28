@@ -1,0 +1,23 @@
+{
+  "name": "kaplay-portfolio",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/MoJoF/kaplay-portfolio#readme",
+  "bugs": {
+    "url": "https://github.com/MoJoF/kaplay-portfolio/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MoJoF/kaplay-portfolio.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "kaplay": "^3001.0.19"
+  }
+}
