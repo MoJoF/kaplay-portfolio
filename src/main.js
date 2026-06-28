@@ -23,49 +23,89 @@ scene("game", () => {
 
   const startCoords = vec2(200, 300);
   const size = { width: 64, height: 64 };
-  const grid = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+
+  const mapLayout = [
+    "0000000000000000000000000000000",
+    "0111111111111111111111111111110",
+    "0111111111111111111111111111110",
+    "0111111111111111111111111111110",
+    "0111111111111111111111111111110",
+    "0111111111111111111111111111110",
+    "0111111111111111111111111111110",
+    "0111111111111111111111111111110",
+    "0111111111111111111111111111110",
+    "0111111111111111111111111111110",
+    "0111111111111111111111111111110",
+    "0111111111111111111111111111110",
+    "0111111111111111111111111111110",
+    "0111111111111111111111111111110",
+    "0111111111111111111111111111110",
+    "0111111111111111111111111111110",
+    "0000000000000000000000000000000",
   ]
 
-  grid.forEach((row, y) => {
-    row.forEach((cell, x) => {
-      if (cell === 1) {
-        add([
-          rect(size.width, size.height),
-          color('#953865'),
-          pos(vec2(startCoords.x + x * size.width, startCoords.y + y * size.height)),
-          outline(1, new Color(255, 255, 255)),
-        ])
-      }
-    })
+  const level = addLevel(mapLayout, {
+    tileWidth: size.width,
+    tileHeight: size.height,
+    tiles: {
+      "0": () => [
+        rect(size.width, size.height),
+        color('#121212'),
+        outline(1, new Color(255, 255, 255)),
+        area(),
+        body({ isStatic: true }),
+      ],
+      "1": () => [
+        rect(size.width, size.height),
+        color('#6f3652'),
+      ]
+    }
   })
 
+  const mapWidth = Math.max(...mapLayout.map(row => row.length)) * size.width;
+  const mapHeight = mapLayout.length * size.height;
+
+
+  const personWidth = 96
+  const personHeight = 128
   const person = add([
-    rect(16, 32),
-    color('#00FF00'),
-    pos(startCoords.x + 32, startCoords.y + 32),
+    rect(personWidth, personHeight),
+    color('#39a639'),
+    pos(startCoords.x + personWidth / 4 * 3 + size.width, startCoords.y),
     body(),
+    area(),
     "person"
   ])
 
-  person.onKeyPress("left", () => {
-    person.move(-16, 0);
+  const speed = 10
+
+  person.onKeyDown("left", () => {
+    person.move(-64 * speed, 0);
   })
 
-  person.onKeyPress("right", () => {
-    person.move(16, 0);
+  person.onKeyDown("right", () => {
+    person.move(64 * speed, 0);
   })
 
-  person.onKeyPress("up", () => {
-    person.move(0, -16);
+  person.onKeyDown("up", () => {
+    person.move(0, -64 * speed);
   })
 
-  person.onKeyPress("down", () => {
-    person.move(0, 16);
-  })  
+  person.onKeyDown("down", () => {
+    person.move(0, 64 * speed);
+  })
+
+  onUpdate(() => {
+    const minX = width() / 2;
+    const maxX = mapWidth - width() / 2;
+    const minY = height() / 2;
+    const maxY = mapHeight - height() / 2;
+
+    const clampedX = clamp(person.pos.x, minX, maxX);
+    const clampedY = clamp(person.pos.y, minY, maxY);
+
+    setCamPos(clampedX, clampedY);
+  })
 })
 
 go("game");
