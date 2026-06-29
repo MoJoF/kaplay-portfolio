@@ -39,7 +39,7 @@ scene("game", () => {
 
   const mapLayout = [
     "eeeeeeeeeeeeeeee",
-    "evvvvvvvvvvvvvve",
+    ">vvvvvvvvvvvvvve",
     ">11111111111111<",
     ">111111111111112",
     ">111111111111112",
