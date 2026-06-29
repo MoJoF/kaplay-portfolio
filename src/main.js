@@ -1,4 +1,5 @@
 import kaplay from 'kaplay';
+import { cameraInit } from './cameraInit'
 
 kaplay({
   width: window.innerWidth,
@@ -6,7 +7,7 @@ kaplay({
   background: '#121212',
   canvas: document.getElementById('kaplay-canvas'),
   pixelDensity: 1,
-  texFilter: 'linear',
+  texFilter: 'nearest',
   global: true,
   debug: true,
   debugKey: 'r',
@@ -19,6 +20,8 @@ loadSprite('room_wall_left', '/textures/wall-left.png')
 loadSprite('room_wall_right', '/textures/wall-right.png')
 loadSprite('room_wall_down', '/textures/wall-down.png')
 loadSprite('room_wall_empty', '/textures/wall-empty.png')
+loadSprite('bed', '/textures/bed.png')
+
 
 scene("game", () => {
   add([
@@ -28,18 +31,21 @@ scene("game", () => {
     "bg"
   ])
 
+  let currentObj = ""
+  let isMoving = true
+
   const startCoords = vec2(150, 128);
   const size = { width: 64, height: 64 };
 
   const mapLayout = [
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-    "evvvvvvvvvvvvvvvvvvvvvvvvvvvvve",
-    ">11111111111111111111111111111<",
-    ">111111111111111111111111111111",
-    ">111111111111111111111111111111",
-    ">111111111111111111111111111111",
-    ">11111111111111111111111111111<",
-    "e^^^^^^^^^^^^^^^^^^^^^^^^^^^^^e",
+    "eeeeeeeeeeeeeeee",
+    "evvvvvvvvvvvvvve",
+    ">11111111111111<",
+    ">111111111111112",
+    ">111111111111112",
+    ">111111111111112",
+    ">11111111111111<",
+    "e^^^^^^^^^^^^^^e",
   ]
 
   const level = addLevel(mapLayout, {
@@ -79,63 +85,73 @@ scene("game", () => {
       "1": () => [
         sprite('room_floor'),
       ],
+      "2": () => [
+        sprite('room_floor'),
+        area({ shape: new Rect(vec2(size.width * 0.5, 0), size.width * 0.5, size.height) }),
+        "to_next_scene",
+      ],
     }
   })
 
   const mapWidth = Math.max(...mapLayout.map(row => row.length)) * size.width;
   const mapHeight = mapLayout.length * size.height;
 
-  const personWidth = 48
-  const personHeight = 64
-  const person = add([
-    rect(personWidth, personHeight),
+  const playerWidth = 48
+  const playerHeight = 64
+  const player = add([
+    rect(playerWidth, playerHeight),
     color('#39a639'),
-    pos(startCoords.x + personWidth / 4 * 3 + size.width, startCoords.y),
+    pos(startCoords.x + playerWidth / 4 * 3 + size.width, startCoords.y),
     body(),
-    area(),
-    "person"
+    z(10),
+    area({ shape: new Rect(vec2(-(playerWidth * 0.125), playerHeight * 0.35), playerWidth + playerWidth * 0.25, playerHeight * 0.65) }),
+    "player"
   ])
+
+  add([
+    sprite('bed'),
+    area(),
+    body({ isStatic: true }),
+    pos(65, 115),
+    scale(1.5),
+    "bed"
+  ])
+
+  onKeyPress('z', () => {
+    switch (currentObj) {
+      case 'bed':
+        debug.log('Bed...')
+        break;
+
+      default:
+        break;
+    }
+  })
+
+  onCollide("player", "bed", (player, zone) => currentObj = 'bed')
+  onCollideEnd("player", "bed", (player, zone) => currentObj = "")
+
+  onCollide("player", "to_next_scene", (player, zone) => debug.log('Collide...'))
 
   const speed = 5
 
-  person.onKeyDown("left", () => {
-    person.move(-64 * speed, 0);
+  player.onKeyDown("left", () => {
+    if (isMoving) player.move(-64 * speed, 0);
   })
 
-  person.onKeyDown("right", () => {
-    person.move(64 * speed, 0);
+  player.onKeyDown("right", () => {
+    if (isMoving) player.move(64 * speed, 0);
   })
 
-  person.onKeyDown("up", () => {
-    person.move(0, -64 * speed);
+  player.onKeyDown("up", () => {
+    if (isMoving) player.move(0, -64 * speed);
   })
 
-  person.onKeyDown("down", () => {
-    person.move(0, 64 * speed);
+  player.onKeyDown("down", () => {
+    if (isMoving) player.move(0, 64 * speed);
   })
 
-  onUpdate(() => {
-    const zoom = getCamScale().x;
-
-    // Вычисляем реальный размер видимой области с учетом зума
-    const viewWidth = width() / zoom;
-    const viewHeight = height() / zoom;
-
-    // Рассчитываем корректные границы для центра камеры
-    const minX = viewWidth / 2;
-    const maxX = mapWidth - viewWidth / 2;
-    const minY = viewHeight / 2;
-    const maxY = mapHeight - viewHeight / 2;
-
-    // Ограничиваем координаты игрока по новым границам
-    const clampedX = clamp(person.pos.x, minX, maxX);
-    const clampedY = clamp(person.pos.y, minY, maxY);
-
-    // Мгновенно перемещаем камеру без задержек
-    setCamPos(clampedX, clampedY);
-  })
-
-  setCamScale(2)
+  cameraInit(mapWidth, mapHeight)
 })
 
 go("game");
