@@ -5,13 +5,20 @@ kaplay({
   height: window.innerHeight,
   background: '#121212',
   canvas: document.getElementById('kaplay-canvas'),
-  pixelDensity: 2,
+  pixelDensity: 1,
   texFilter: 'linear',
   global: true,
   debug: true,
   debugKey: 'r',
   crisp: true,
 });
+
+loadSprite('room_floor', '/textures/floor.png')
+loadSprite('room_wall', '/textures/wall.png')
+loadSprite('room_wall_left', '/textures/wall-left.png')
+loadSprite('room_wall_right', '/textures/wall-right.png')
+loadSprite('room_wall_down', '/textures/wall-down.png')
+loadSprite('room_wall_empty', '/textures/wall-empty.png')
 
 scene("game", () => {
   add([
@@ -21,27 +28,18 @@ scene("game", () => {
     "bg"
   ])
 
-  const startCoords = vec2(200, 300);
+  const startCoords = vec2(150, 128);
   const size = { width: 64, height: 64 };
 
   const mapLayout = [
-    "0000000000000000000000000000000",
-    "0111111111111111111111111111110",
-    "0111111111111111111111111111110",
-    "0111111111111111111111111111110",
-    "0111111111111111111111111111110",
-    "0111111111111111111111111111110",
-    "0111111111111111111111111111110",
-    "0111111111111111111111111111110",
-    "0111111111111111111111111111110",
-    "0111111111111111111111111111110",
-    "0111111111111111111111111111110",
-    "0111111111111111111111111111110",
-    "0111111111111111111111111111110",
-    "0111111111111111111111111111110",
-    "0111111111111111111111111111110",
-    "0111111111111111111111111111110",
-    "0000000000000000000000000000000",
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "evvvvvvvvvvvvvvvvvvvvvvvvvvvvve",
+    ">11111111111111111111111111111<",
+    ">111111111111111111111111111111",
+    ">111111111111111111111111111111",
+    ">111111111111111111111111111111",
+    ">11111111111111111111111111111<",
+    "e^^^^^^^^^^^^^^^^^^^^^^^^^^^^^e",
   ]
 
   const level = addLevel(mapLayout, {
@@ -49,25 +47,46 @@ scene("game", () => {
     tileHeight: size.height,
     tiles: {
       "0": () => [
-        rect(size.width, size.height),
-        color('#121212'),
-        outline(1, new Color(255, 255, 255)),
+        sprite('room_wall'),
+        area(),
+        body({ isStatic: true }),
+      ],
+      "v": () => [
+        sprite('room_wall'),
+        area({ shape: new Rect(vec2(0, 0), size.width, size.height * 0.75) }),
+        body({ isStatic: true }),
+      ],
+      ">": () => [
+        sprite('room_wall_left'),
+        area(),
+        body({ isStatic: true }),
+      ],
+      "<": () => [
+        sprite('room_wall_right'),
+        area(),
+        body({ isStatic: true }),
+      ],
+      "^": () => [
+        sprite('room_wall_down'),
+        area(),
+        body({ isStatic: true }),
+      ],
+      "e": () => [
+        sprite('room_wall_empty'),
         area(),
         body({ isStatic: true }),
       ],
       "1": () => [
-        rect(size.width, size.height),
-        color('#6f3652'),
-      ]
+        sprite('room_floor'),
+      ],
     }
   })
 
   const mapWidth = Math.max(...mapLayout.map(row => row.length)) * size.width;
   const mapHeight = mapLayout.length * size.height;
 
-
-  const personWidth = 96
-  const personHeight = 128
+  const personWidth = 48
+  const personHeight = 64
   const person = add([
     rect(personWidth, personHeight),
     color('#39a639'),
@@ -77,7 +96,7 @@ scene("game", () => {
     "person"
   ])
 
-  const speed = 10
+  const speed = 5
 
   person.onKeyDown("left", () => {
     person.move(-64 * speed, 0);
@@ -96,16 +115,27 @@ scene("game", () => {
   })
 
   onUpdate(() => {
-    const minX = width() / 2;
-    const maxX = mapWidth - width() / 2;
-    const minY = height() / 2;
-    const maxY = mapHeight - height() / 2;
+    const zoom = getCamScale().x;
 
+    // Вычисляем реальный размер видимой области с учетом зума
+    const viewWidth = width() / zoom;
+    const viewHeight = height() / zoom;
+
+    // Рассчитываем корректные границы для центра камеры
+    const minX = viewWidth / 2;
+    const maxX = mapWidth - viewWidth / 2;
+    const minY = viewHeight / 2;
+    const maxY = mapHeight - viewHeight / 2;
+
+    // Ограничиваем координаты игрока по новым границам
     const clampedX = clamp(person.pos.x, minX, maxX);
     const clampedY = clamp(person.pos.y, minY, maxY);
 
+    // Мгновенно перемещаем камеру без задержек
     setCamPos(clampedX, clampedY);
   })
+
+  setCamScale(2)
 })
 
 go("game");
