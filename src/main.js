@@ -112,7 +112,7 @@ scene("game", () => {
     sprite('bed'),
     area(),
     body({ isStatic: true }),
-    pos(65, 115),
+    pos(70, 90),
     scale(1.5),
     "bed"
   ])
